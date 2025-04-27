@@ -4,7 +4,7 @@
 
 const int WORLD_SIZE_X = 1920;
 const int WORLD_SIZE_Y = 1080;
-const int SPEED = 1;
+int SPEED = 1;
 
 bool world[WORLD_SIZE_X][WORLD_SIZE_Y]{false};
 bool last_world[WORLD_SIZE_X][WORLD_SIZE_Y]{true};
@@ -35,14 +35,9 @@ int main(int argc, char *argv[])
 
 	while (!handle_events())
 	{
-
-		for (int i = 0; i < SPEED; i++)
-		{
-			process_world();
-		}
+		process_world();
 		render(renderer);
 		SDL_Delay(16);
-		std::cout << "Tick" << std::endl;
 	}
 
 	SDL_DestroyRenderer(renderer);
@@ -87,13 +82,6 @@ void setup_world() {
             last_world[x][y] = world[x][y] = false;
         }
     }
-
-    // Sync to world
-    for (int x = 0; x < WORLD_SIZE_X; x++) {
-        for (int y = 0; y < WORLD_SIZE_Y; y++) {
-            world[x][y] = last_world[x][y];
-        }
-    }
 }
 
 void add_random_cells(int pos_x, int pos_y)
@@ -113,21 +101,26 @@ void add_random_cells(int pos_x, int pos_y)
 
 void make_glider(int pos_x, int pos_y)
 {
-	world[pos_x][pos_y - 1] = true;
+	world[pos_x][pos_y] = true;
+	world[pos_x - 1][pos_y] = true;
 	world[pos_x + 1][pos_y] = true;
-	world[pos_x - 1][pos_y + 1] = true;
-	world[pos_x][pos_y + 1] = true;
-	world[pos_x + 1][pos_y + 1] = true;
-	process_world();
 }
 
 void process_world()
 {
+
 	for (int x = 0; x < WORLD_SIZE_X; x++)
 	{
 		for (int y = 0; y < WORLD_SIZE_Y; y++)
 		{
 			last_world[x][y] = world[x][y];
+		}
+	}
+
+	for (int x = 0; x < WORLD_SIZE_X; x++)
+	{
+		for (int y = 0; y < WORLD_SIZE_Y; y++)
+		{
 			world[x][y] = process_cell(x, y);
 		}
 	}
@@ -140,8 +133,7 @@ void draw_world(SDL_Renderer* renderer)
 	{
 		for (int y = 0; y < WORLD_SIZE_Y; y++)
 		{
-			bool cell = world[x][y];
-			if (cell == true)
+			if (world[x][y] == true)
 			{
 				SDL_RenderPoint(renderer, x, y);
 			}
@@ -152,6 +144,8 @@ void draw_world(SDL_Renderer* renderer)
 bool process_cell(int pos_x, int pos_y) {
 	int live_neighbours = 0;
 
+	last_world[pos_x][pos_y] = world[pos_x][pos_y];
+
 	for (int x = -1; x <= 1; x++) {
 		for (int y = -1; y <= 1; y++) {
 			// Skip the center cell
@@ -160,11 +154,10 @@ bool process_cell(int pos_x, int pos_y) {
 			int n_x = pos_x + x;
 			int n_y = pos_y + y;
 
-			// Check bounds
-			if (n_x >= 0 && n_x < WORLD_SIZE_X && n_y >= 0 && n_y < WORLD_SIZE_Y) {
-				if (last_world[n_x][n_y] == true) {
-					live_neighbours++;
-				}
+			bool neighbour_cell = last_world[n_x][n_y];
+			if (neighbour_cell == true)
+			{
+				live_neighbours++;
 			}
 		}
 	}
