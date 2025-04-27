@@ -2,12 +2,15 @@
 #include <SDL.h>
 #include <algorithm>
 
-const int WORLD_SIZE_X = 1920;
-const int WORLD_SIZE_Y = 1080;
+const int WORLD_SIZE_X = 960;
+const int WORLD_SIZE_Y = 960;
+int ZOOM = 1;
 int SPEED = 1;
 
 bool world[WORLD_SIZE_X][WORLD_SIZE_Y]{false};
 bool last_world[WORLD_SIZE_X][WORLD_SIZE_Y]{true};
+
+SDL_FPoint camera_position = SDL_FPoint{0, 0};
 
 bool process_cell(int pos_x, int pos_y);
 
@@ -48,8 +51,11 @@ int main(int argc, char *argv[])
 
 void render(SDL_Renderer* renderer)
 {
-	SDL_SetRenderDrawColor(renderer, 51, 57, 65, 255);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
+	SDL_SetRenderDrawColor(renderer, 51, 57, 65, 255);
+	SDL_FRect bg_rect = SDL_FRect{0 - (camera_position.x * ZOOM), 0 - (camera_position.y * ZOOM), float(WORLD_SIZE_X) * ZOOM, float(WORLD_SIZE_Y) * ZOOM};
+	SDL_RenderFillRect(renderer, &bg_rect);
 	draw_world(renderer);
 	SDL_RenderPresent(renderer);
 }
@@ -65,10 +71,33 @@ bool handle_events()
 		}
 
 		if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-			int mouseX = event.button.x;
-			int mouseY = event.button.y;
-			if (mouseX >= 0 && mouseX < WORLD_SIZE_X && mouseY >= 0 && mouseY < WORLD_SIZE_Y) {
-				add_random_cells(mouseX, mouseY);
+			if (event.button.button == SDL_BUTTON_RIGHT)
+			{
+				int mouseX = event.button.x;
+				int mouseY = event.button.y;
+				int globalMouseX = mouseX - camera_position.x;
+				int globalMouseY = mouseY - camera_position.y;
+				add_random_cells((mouseX / ZOOM) + camera_position.x, (mouseY / ZOOM) + camera_position.y);
+			}
+		}
+		if (event.type == SDL_EVENT_MOUSE_WHEEL)
+		{
+			if (event.wheel.y < 0 && ZOOM > 1)
+			{
+				ZOOM--;
+			} else if (event.wheel.y > 0)
+			{
+				camera_position.x -= camera_position.x / ZOOM + 1;
+				ZOOM++;
+			}
+		}
+		if (event.type == SDL_EVENT_MOUSE_MOTION)
+		{
+			Uint32 mouse_state = SDL_GetGlobalMouseState(NULL, NULL);
+			if (mouse_state & SDL_BUTTON_LMASK)
+			{
+				camera_position.x -= event.motion.xrel / ZOOM;
+				camera_position.y -= event.motion.yrel / ZOOM;
 			}
 		}
 	}
@@ -87,9 +116,9 @@ void setup_world() {
 void add_random_cells(int pos_x, int pos_y)
 {
 	std::cout << pos_x << " " << pos_y << std::endl;
-	for (int x = 0; x < 5; x++)
+	for (int x = 0; x < 50; x++)
 	{
-		for (int y = 0; y < 5; y++)
+		for (int y = 0; y < 50; y++)
 		{
 			if (rand() % 2 == 0)
 			{
@@ -135,7 +164,8 @@ void draw_world(SDL_Renderer* renderer)
 		{
 			if (world[x][y] == true)
 			{
-				SDL_RenderPoint(renderer, x, y);
+				SDL_FRect rect = SDL_FRect{(float(x) - camera_position.x) * ZOOM, (float(y) - camera_position.y) * ZOOM, ZOOM, ZOOM};
+				SDL_RenderFillRect(renderer, &rect);
 			}
 		}
 	}
