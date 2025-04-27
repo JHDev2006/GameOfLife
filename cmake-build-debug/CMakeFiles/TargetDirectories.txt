@@ -1,0 +1,3 @@
+C:/Users/Joe/CLionProjects/MySDL3Project/cmake-build-debug/CMakeFiles/MySDL3Project.dir
+C:/Users/Joe/CLionProjects/MySDL3Project/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Joe/CLionProjects/MySDL3Project/cmake-build-debug/CMakeFiles/rebuild_cache.dir
